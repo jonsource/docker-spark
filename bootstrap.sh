@@ -20,7 +20,35 @@ service ssh start
 $HADOOP_PREFIX/sbin/start-dfs.sh
 $HADOOP_PREFIX/sbin/start-yarn.sh
 
+# run master or worker scripts
+    if [ "${RUN_MASTER}" == "1" ];
+    then
+	    OWN_IP="$(ifconfig | grep -A 1 'eth0' | tail -1 | cut -d ':' -f 2 | cut -d ' ' -f 1)"
 
+        # get own docker link ID
+        # REGEX="_(.*)/"
+        # [[ "${ZK_NAME}" =~ $REGEX ]]
+	    # OWN_HOSTNAME=${BASH_REMATCH[1]}
+
+	    echo "Running as master - $OWN_IP"
+
+	    # echo "Running as master - $OWN_HOSTNAME / $OWN_IP"
+	    # if [ -n "$OWN_HOSTNAME" ];
+	    # then
+	    #     OWN_IP="$OWN_HOSTNAME"
+	    # fi
+
+	    export SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=zk:2181"
+	    env SPARK_MASTER_IP="$OWN_IP" /usr/local/spark/sbin/start-master.sh
+    fi
+    if [ "${RUN_WORKER}" == "1" ];
+    then
+	    echo "Running as worker - connecting to ${SPARK_MASTER_IP}"
+	    cat /etc/hosts
+        /usr/local/spark/sbin/start-slave.sh "${SPARK_MASTER_IP}"
+    fi
+
+trap "echo Exited!; exit;" SIGINT SIGTERM
 
 CMD=${1:-"exit 0"}
 if [[ "$CMD" == "-d" ]];
@@ -29,4 +57,15 @@ then
 	/usr/sbin/sshd -D -d
 else
 	/bin/bash -c "$*"
+	SPARK_PID=$(ps -ef | grep 'spark-' | grep -v grep | awk '{print $2}')
+	if [ -n "$SPARK_PID" ];
+	then
+	    echo Waiting for $SPARK_PID
+	    while [ -e "/proc/$SPARK_PID" ] && [ "$SPARK_PID" != "" ]
+        do
+            echo "$SPARK_PID still running"
+            sleep 10
+        done
+            echo "$SPARK_PID finished running"
+    fi
 fi
