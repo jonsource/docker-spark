@@ -15,8 +15,13 @@ ENV PATH $PATH:$SPARK_HOME/bin:$HADOOP_PREFIX/bin
 # update boot script
 COPY bootstrap.sh /etc/bootstrap.sh
 RUN chown root.root /etc/bootstrap.sh && chmod 700 /etc/bootstrap.sh
-COPY scripts/* /etc/scripts/
-RUN chown -R root.root /etc/scripts && chmod 700 /etc/scripts/*
+# COPY scripts/* /etc/scripts/
+# RUN chown -R root.root /etc/scripts && chmod 700 /etc/scripts/*
+
+RUN apt-get update
+RUN apt-get install python-pip -y
+RUN apt-get install python-dev libmysqlclient-dev -y
+RUN pip install MySQL-python
 
 #install R
 #RUN sh -c 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list'
