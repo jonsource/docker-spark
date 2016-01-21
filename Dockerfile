@@ -12,20 +12,10 @@ RUN $BOOTSTRAP && $HADOOP_PREFIX/bin/hadoop dfsadmin -safemode leave && $HADOOP_
 
 ENV YARN_CONF_DIR $HADOOP_PREFIX/etc/hadoop
 ENV PATH $PATH:$SPARK_HOME/bin:$HADOOP_PREFIX/bin
-# update boot script
-COPY bootstrap.sh /etc/bootstrap.sh
-RUN chown root.root /etc/bootstrap.sh && chmod 700 /etc/bootstrap.sh
-# COPY scripts/* /etc/scripts/
-# RUN chown -R root.root /etc/scripts && chmod 700 /etc/scripts/*
 
 RUN apt-get update; apt-get install -y python-pip python-dev libmysqlclient-dev; pip install MySQL-python
 
-#install R
-#RUN sh -c 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list'
-#RUN gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
-#RUN gpg -a --export E084DAB9 | sudo apt-key add -
-#RUN sudo apt-get update
-#RUN sudo apt-get -y install r-base
-
+# update boot script
+COPY bootstrap.sh /etc/bootstrap.sh
 
 ENTRYPOINT ["/etc/bootstrap.sh"]
