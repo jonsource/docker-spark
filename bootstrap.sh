@@ -2,23 +2,18 @@
 
 rm /tmp/*.pid
 
+# add own IP to hosts with correct hostname
+OWN_IP="$(ifconfig | grep -A 1 'eth0' | tail -1 | cut -d ':' -f 2 | cut -d ' ' -f 1)"
+
+cp /etc/hosts /etc/hosts.bkp
+sed '1 i\'"$OWN_IP `hostname`"'' /etc/hosts.bkp > /etc/hosts.tmp
+cp /etc/hosts.tmp /etc/hosts
+rm /etc/hosts.tmp
+cat /etc/hosts
+
 # run master or worker scripts
     if [ "${RUN_MASTER}" == "1" ];
     then
-        OWN_IP="$(ifconfig | grep -A 1 'eth0' | tail -1 | cut -d ':' -f 2 | cut -d ' ' -f 1)"
-
-        cp /etc/hosts /etc/hosts.bkp
-        sed '1 i\'"$OWN_IP `hostname`"'' /etc/hosts.bkp > /etc/hosts.tmp
-        cp /etc/hosts.tmp /etc/hosts
-        rm /etc/hosts.tmp
-        cat /etc/hosts
-
-        # echo "Running as master - $OWN_HOSTNAME / $OWN_IP"
-        # if [ -n "$OWN_HOSTNAME" ];
-        # then
-        #     OWN_IP="$OWN_HOSTNAME"
-        # fi
-
         export SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=${ZK_ENSAMBLE_IP}"
         if [ -z "${SPARK_MASTER_IP}" ];
         then
